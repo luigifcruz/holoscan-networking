@@ -1,4 +1,0 @@
-# Ignore extracted streaming library files  
-# These are downloaded dependencies and should not be committed to git
-include/
-lib/

@@ -1,6 +1,0 @@
-blosc
-torch
-onnx
-onnxruntime
-Pillow
-matplotlib

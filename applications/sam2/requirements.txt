@@ -1,2 +1,0 @@
-cupy-cuda12x
-numpy<2.0.0

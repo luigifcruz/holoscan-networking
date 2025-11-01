@@ -1,3 +1,0 @@
-halo==0.0.31
-holoscan==2.1.0
-openai==1.72.0
