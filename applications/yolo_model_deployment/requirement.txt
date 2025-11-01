@@ -1,3 +1,0 @@
-onnxruntime
-nvidia-pyindex
-onnx-graphsurgeon

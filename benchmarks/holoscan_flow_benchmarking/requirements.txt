@@ -1,7 +1,0 @@
-numpy
-matplotlib
-nvitop
-argparse
-pydot
-PyGObject==3.50.0
-xdot

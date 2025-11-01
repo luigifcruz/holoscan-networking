@@ -1,5 +1,0 @@
-{
-	"package": {
-		"dockerfile": "operators/advanced_network/Dockerfile"
-	}
-}
