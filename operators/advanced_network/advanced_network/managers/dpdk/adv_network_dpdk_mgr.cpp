@@ -1459,8 +1459,6 @@ struct rte_flow* DpdkMgr::add_modify_flow_set(int port, int queue, const char* b
   struct rte_flow_action_modify_field mf;
   struct rte_flow_error error;
   struct rte_flow_item_eth eth;
-  struct rte_flow_field_data src;
-  struct rte_flow_field_data dst;
 
   int res;
 
