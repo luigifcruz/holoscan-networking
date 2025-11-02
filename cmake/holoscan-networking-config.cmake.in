@@ -1,0 +1,25 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find dependencies
+find_dependency(PkgConfig REQUIRED)
+
+# Try to find DPDK if it was enabled during build
+if(@HOLOSCAN_NETWORKING_ENABLE_DPDK@)
+  pkg_check_modules(DPDK doca-dpdk-bridge)
+  if(NOT DPDK_FOUND)
+    pkg_check_modules(DPDK libdpdk)
+  endif()
+  if(NOT DPDK_FOUND)
+    pkg_check_modules(DPDK dpdk)
+  endif()
+endif()
+
+# Try to find holoscan
+find_package(holoscan QUIET CONFIG)
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/holoscan-networking-targets.cmake")
+
+check_required_components(holoscan-networking)

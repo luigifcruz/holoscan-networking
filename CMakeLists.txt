@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.24)
 
 project(holoscan-networking LANGUAGES CXX CUDA)
 
-option(HOLOSCAN_NETWORKING_ENABLE_DPDK "Build Advanced Networking DPDK manager sources" OFF)
+option(HOLOSCAN_NETWORKING_ENABLE_DPDK "Build Advanced Networking DPDK manager sources" ON)
 option(HOLOSCAN_NETWORKING_ENABLE_GPUNETIO "Build Advanced Networking GPUNetIO/DOCA manager sources" OFF)
-option(HOLOSCAN_NETWORKING_ENABLE_RIVERMAX "Build Advanced Networking Rivermax manager sources" ON)
+option(HOLOSCAN_NETWORKING_ENABLE_RIVERMAX "Build Advanced Networking Rivermax manager sources" OFF)
 
 set(HOLOSCAN_NETWORKING_CUDA_ARCHITECTURES "80;90" CACHE STRING "CUDA SM architectures to target")
 
@@ -93,3 +93,89 @@ if(holoscan_FOUND)
 else()
   message(STATUS "holoscan package not found - link it manually if needed.")
 endif()
+
+if(HOLOSCAN_NETWORKING_ENABLE_DPDK)
+  find_package(PkgConfig REQUIRED)
+
+  pkg_check_modules(DPDK doca-dpdk-bridge)
+
+  if(NOT DPDK_FOUND)
+    pkg_check_modules(DPDK libdpdk)
+  endif()
+
+  if(NOT DPDK_FOUND)
+    pkg_check_modules(DPDK dpdk)
+  endif()
+
+  if(NOT DPDK_FOUND)
+    message(FATAL_ERROR "DPDK not found via pkg-config. Please ensure DPDK is installed with proper pkg-config files.")
+  endif()
+
+  target_include_directories(holoscan-networking
+    PUBLIC ${DPDK_INCLUDE_DIRS}
+  )
+
+  target_link_libraries(holoscan-networking
+    PUBLIC ${DPDK_LIBRARIES}
+  )
+
+  target_link_directories(holoscan-networking
+    PUBLIC ${DPDK_LIBRARY_DIRS}
+  )
+
+  if(DPDK_CFLAGS_OTHER)
+    target_compile_options(holoscan-networking
+      PUBLIC ${DPDK_CFLAGS_OTHER}
+    )
+  endif()
+
+  message(STATUS "DPDK configuration complete")
+  message(STATUS "  Include dirs: ${DPDK_INCLUDE_DIRS}")
+  message(STATUS "  Library dirs: ${DPDK_LIBRARY_DIRS}")
+endif()
+
+# Installation rules
+include(GNUInstallDirs)
+
+# Install the library
+install(TARGETS holoscan-networking
+  EXPORT holoscan-networking-targets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Install headers
+install(DIRECTORY operators/advanced_network/advanced_network
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.cuh"
+)
+
+# Install export targets
+install(EXPORT holoscan-networking-targets
+  FILE holoscan-networking-targets.cmake
+  NAMESPACE holoscan-networking::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/holoscan-networking
+)
+
+# Create and install package config file
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/holoscan-networking-config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/holoscan-networking-config.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/holoscan-networking
+)
+
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/holoscan-networking-config-version.cmake
+  VERSION 1.0.0
+  COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/holoscan-networking-config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/holoscan-networking-config-version.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/holoscan-networking
+)
