@@ -16,6 +16,7 @@ sources = files(
 )
 
 sources += files(
+  adv_network_dir / 'dpdk_log.cpp',
   adv_network_dir / 'managers/dpdk/adv_network_dpdk_mgr.cpp',
   adv_network_dir / 'managers/dpdk/adv_network_dpdk_stats.cpp',
 )
