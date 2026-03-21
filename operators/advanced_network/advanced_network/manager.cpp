@@ -14,8 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cuda.h>
 #include "advanced_network/manager.h"
+#if ADV_NETWORK_HAS_CUDA
+#include <cuda.h>
+#endif
 // Include the appropriate headers based on which ANO_MGR types are defined
 #if ANO_MGR_DPDK
 #include "advanced_network/managers/dpdk/adv_network_dpdk_mgr.h"
@@ -123,15 +125,21 @@ Status Manager::allocate_memory_regions() {
           ptr = malloc(mr.second.ttl_size_);
           break;
         case MemoryKind::HOST_PINNED:
+#if ADV_NETWORK_HAS_CUDA
           if (cudaHostAlloc(&ptr, mr.second.ttl_size_, 0) != cudaSuccess) {
             HOLOSCAN_LOG_CRITICAL("Failed to allocate CUDA pinned host memory!");
             return Status::NULL_PTR;
           }
+#else
+          HOLOSCAN_LOG_CRITICAL("CUDA runtime is required for host_pinned memory regions");
+          return Status::NOT_SUPPORTED;
+#endif
           break;
         case MemoryKind::HUGE:
           ptr = rte_malloc_socket(nullptr, mr.second.ttl_size_, 0, mr.second.affinity_);
           break;
         case MemoryKind::DEVICE: {
+#if ADV_NETWORK_HAS_CUDA
           unsigned int flag = 1;
           const auto align = RTE_ALIGN_CEIL(mr.second.ttl_size_, GPU_PAGE_SIZE);
           CUdeviceptr cuptr;
@@ -157,6 +165,10 @@ Status Manager::allocate_memory_regions() {
             return Status::NULL_PTR;
           }
           break;
+#else
+          HOLOSCAN_LOG_CRITICAL("CUDA driver is required for device memory regions");
+          return Status::NOT_SUPPORTED;
+#endif
         }
         default:
           HOLOSCAN_LOG_ERROR("Unknown memory type {}!", static_cast<int>(mr.second.kind_));
@@ -357,6 +369,7 @@ struct rte_mempool* Manager::create_generic_pool(const std::string& name,
 
 int Manager::numa_from_mem(const MemoryRegionConfig& mr) const {
   if (mr.kind_ == MemoryKind::DEVICE) {
+#if ADV_NETWORK_HAS_CUDA
     int val;
     if (cudaDeviceGetAttribute(&val, cudaDevAttrHostNumaId, mr.affinity_) != cudaSuccess) {
       HOLOSCAN_LOG_ERROR("Failed to get NUMA node from device {}", mr.affinity_);
@@ -364,6 +377,10 @@ int Manager::numa_from_mem(const MemoryRegionConfig& mr) const {
     }
 
     return val;
+#else
+    HOLOSCAN_LOG_ERROR("CUDA runtime is required for device memory regions");
+    return -1;
+#endif
   } else {
     return mr.affinity_;
   }

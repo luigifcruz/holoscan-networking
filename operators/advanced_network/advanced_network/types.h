@@ -29,7 +29,13 @@
 #include <linux/if_ether.h>
 #include <netinet/ip.h>
 #include <linux/udp.h>
+#if __has_include(<cuda_runtime.h>)
 #include <cuda_runtime.h>
+#define ADV_NETWORK_HAS_CUDA 1
+#else
+#define ADV_NETWORK_HAS_CUDA 0
+using cudaEvent_t = void*;
+#endif
 
 #include "advanced_network/logging.h"
 

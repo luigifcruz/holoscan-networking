@@ -18,7 +18,11 @@
 #pragma once
 #include <stdint.h>
 #include <assert.h>
+#if __has_include(<cuda_runtime.h>)
 #include <cuda_runtime.h>
+#else
+using cudaStream_t = void*;
+#endif
 
 #if __cplusplus
 extern "C" {
