@@ -7,6 +7,8 @@ project('holoscan-networking', ['cpp'],
   ]
 )
 
+cpp = meson.get_compiler('cpp')
+
 # Define source files
 adv_network_dir = 'operators/advanced_network/advanced_network'
 
@@ -30,9 +32,13 @@ compile_defs = [
 # Include directories
 inc_dirs = include_directories('operators/advanced_network')
 
+# CUDA support for device memory regions
+cuda_dep = dependency('cuda', modules: ['cudart'], required: true)
+
 # Dependencies
 deps = [
   dependency('libdpdk', required: false),
+  cuda_dep,
 ]
 
 # Build library
