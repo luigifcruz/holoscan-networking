@@ -20,6 +20,9 @@ The Advanced Network library provides a way for users to achieve the highest thr
 for transmitting and receiving Ethernet frames out of and into Holoscan operators. Direct access to the NIC hardware
 is available in userspace, thus bypassing the kernel's networking stack entirely.
 
+This trimmed library build exposes the C++ API only, keeps the DPDK backend, and expects callers to populate
+`advanced_network::NetworkConfig` directly instead of relying on Python bindings or YAML parsing.
+
 
 #### Requirements
 

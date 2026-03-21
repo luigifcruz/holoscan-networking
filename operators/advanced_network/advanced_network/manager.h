@@ -145,8 +145,7 @@ class ManagerFactory {
 
   static ManagerType get_manager_type() { return ManagerType_; }
 
-  template <typename Config>
-  static ManagerType get_manager_type(const Config& config);
+  static ManagerType get_manager_type(const NetworkConfig& config);
 
   static ManagerType get_default_manager_type();
 

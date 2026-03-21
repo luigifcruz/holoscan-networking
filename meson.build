@@ -24,7 +24,6 @@ sources += files(
 # Compile definitions
 compile_defs = [
   '-DALLOW_EXPERIMENTAL_API',
-  '-DDOCA_ALLOW_EXPERIMENTAL_API',
   '-DANO_MGR_DPDK=1',
 ]
 
@@ -33,14 +32,6 @@ inc_dirs = include_directories('operators/advanced_network')
 
 # Dependencies
 deps = [
-  dependency(
-    'holoscan',
-    modules: [
-      'holoscan::core',
-      'holoscan::logger',
-    ],
-    required: false,
-  ),
   dependency('libdpdk', required: false),
 ]
 
@@ -75,7 +66,7 @@ install_subdir('operators/advanced_network/advanced_network',
 pkg = import('pkgconfig')
 pkg.generate(
   holoscan_networking_lib,
-  description: 'NVIDIA Holoscan Advanced Networking Library',
+  description: 'NVIDIA Advanced Networking Library',
   name: 'holoscan-networking',
   filebase: 'holoscan-networking',
   subdirs: 'advanced_network',

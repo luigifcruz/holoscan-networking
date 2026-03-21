@@ -31,6 +31,8 @@
 #include <linux/udp.h>
 #include <cuda_runtime.h>
 
+#include "advanced_network/logging.h"
+
 namespace holoscan::advanced_network {
 
 /**
@@ -225,14 +227,10 @@ enum class ManagerType {
   UNKNOWN = -1,
   DEFAULT,
   DPDK,
-  DOCA,
-  RIVERMAX,
   RDMA,
 };
 
 static constexpr const char* ANO_MGR_STR__DPDK = "dpdk";
-static constexpr const char* ANO_MGR_STR__GPUNETIO = "gpunetio";
-static constexpr const char* ANO_MGR_STR__RIVERMAX = "rivermax";
 static constexpr const char* ANO_MGR_STR__RDMA = "rdma";
 static constexpr const char* ANO_MGR_STR__DEFAULT = "default";
 /**
@@ -254,20 +252,6 @@ inline ManagerType manager_type_from_string(const std::string& str) {
   if (str == ANO_MGR_STR__DPDK) is_known_but_unavailable = true;
 #endif
 
-#if ANO_MGR_GPUNETIO
-  if (str == ANO_MGR_STR__GPUNETIO) return ManagerType::DOCA;
-  available_managers += std::string(ANO_MGR_STR__GPUNETIO) + " ";
-#else
-  if (str == ANO_MGR_STR__GPUNETIO) is_known_but_unavailable = true;
-#endif
-
-#if ANO_MGR_RIVERMAX
-  if (str == ANO_MGR_STR__RIVERMAX) return ManagerType::RIVERMAX;
-  available_managers += std::string(ANO_MGR_STR__RIVERMAX) + " ";
-#else
-  if (str == ANO_MGR_STR__RIVERMAX) is_known_but_unavailable = true;
-#endif
-
 #if ANO_MGR_RDMA
   if (str == ANO_MGR_STR__RDMA) return ManagerType::RDMA;
   available_managers += std::string(ANO_MGR_STR__RDMA) + " ";
@@ -282,9 +266,7 @@ inline ManagerType manager_type_from_string(const std::string& str) {
   if (is_known_but_unavailable) {
     throw std::invalid_argument(
         "Manager type '" + str + "' is not available in this build. "
-        "Available managers: " + available_managers + ". "
-        "To enable '" + str + "', rebuild with CMake option: "
-        "-DANO_MGR=\"" + available_managers + " " + str + "\"");
+        "Available managers: " + available_managers + ".");
   }
 
   throw std::invalid_argument(
@@ -341,10 +323,6 @@ inline std::string manager_type_to_string(ManagerType type) {
   switch (type) {
     case ManagerType::DPDK:
       return ANO_MGR_STR__DPDK;
-    case ManagerType::DOCA:
-      return ANO_MGR_STR__GPUNETIO;
-    case ManagerType::RIVERMAX:
-      return ANO_MGR_STR__RIVERMAX;
     case ManagerType::RDMA:
       return ANO_MGR_STR__RDMA;
     case ManagerType::DEFAULT:
@@ -551,42 +529,28 @@ struct NetworkConfig {
   LogLevel::Level log_level_;
 };
 
-template <typename Config>
-auto get_rdma_configs_enabled(const Config& config) {
+inline auto get_rdma_configs_enabled(const NetworkConfig& config) {
   bool server = false;
   bool client = false;
 
-  auto& yaml_nodes = config.yaml_nodes();
-  for (const auto& yaml_node : yaml_nodes) {
-    auto interfaces_node = yaml_node["advanced_network"]["cfg"]["interfaces"];
-    for (const auto& intf : interfaces_node) {
-      auto rdma_config_node = intf["rdma_config"];
-      if (rdma_config_node.IsDefined()) {
-        std::string mode = rdma_config_node["mode"].template as<std::string>();
-        if (mode == "server") {
-          server = true;
-        } else if (mode == "client") {
-          client = true;
-        }
-      }
+  for (const auto& intf : config.ifs_) {
+    if (intf.rdma_.mode_ == RDMAMode::SERVER) {
+      server = true;
+    } else if (intf.rdma_.mode_ == RDMAMode::CLIENT) {
+      client = true;
     }
   }
 
   return std::make_tuple(server, client);
 }
 
-template <typename Config>
-auto get_rx_tx_configs_enabled(const Config& config) {
+inline auto get_rx_tx_configs_enabled(const NetworkConfig& config) {
   bool rx = false;
   bool tx = false;
 
-  auto& yaml_nodes = config.yaml_nodes();
-  for (const auto& yaml_node : yaml_nodes) {
-    auto node = yaml_node["advanced_network"]["cfg"]["interfaces"];
-    for (const auto& intf : node) {
-      if (intf["rx"]) { rx = true; }
-      if (intf["tx"]) { tx = true; }
-    }
+  for (const auto& intf : config.ifs_) {
+    rx = rx || !intf.rx_.queues_.empty();
+    tx = tx || !intf.tx_.queues_.empty();
   }
 
   return std::make_tuple(rx, tx);

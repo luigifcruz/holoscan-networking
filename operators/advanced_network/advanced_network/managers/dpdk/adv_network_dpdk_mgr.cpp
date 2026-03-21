@@ -30,7 +30,6 @@
 
 #include "advanced_network/dpdk_log.h"
 #include "adv_network_dpdk_mgr.h"
-#include "holoscan/holoscan.hpp"
 
 using namespace std::chrono;
 

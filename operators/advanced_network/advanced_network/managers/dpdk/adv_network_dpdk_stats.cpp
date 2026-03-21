@@ -16,7 +16,6 @@
  */
 
 #include "adv_network_dpdk_stats.h"
-#include "holoscan/holoscan.hpp"
 #include <thread>
 #include <chrono>
 

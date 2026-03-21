@@ -20,17 +20,11 @@
 #if ANO_MGR_DPDK
 #include "advanced_network/managers/dpdk/adv_network_dpdk_mgr.h"
 #endif
-#if ANO_MGR_GPUNETIO
-#include "advanced_network/managers/gpunetio/adv_network_doca_mgr.h"
-#endif
-#if ANO_MGR_RIVERMAX
-#include "advanced_network/managers/rivermax/adv_network_rivermax_mgr.h"
-#endif
 #if ANO_MGR_RDMA
 #include "adv_network_rdma_mgr.h"
 #endif
 
-#if ANO_MGR_DPDK || ANO_MGR_GPUNETIO || ANO_MGR_RDMA
+#if ANO_MGR_DPDK || ANO_MGR_RDMA
 #include <rte_common.h>
 #include <rte_malloc.h>
 #include <rte_mbuf.h>
@@ -39,7 +33,6 @@
 #include <rte_eal.h>
 #endif
 
-#include "holoscan/holoscan.hpp"
 
 namespace holoscan::advanced_network {
 
@@ -52,10 +45,6 @@ extern void initialize_manager(Manager* _manager);
 ManagerType ManagerFactory::get_default_manager_type() {
 #if ANO_MGR_DPDK
   return ManagerType::DPDK;
-#elif ANO_MGR_GPUNETIO
-  return ManagerType::DOCA;
-#elif ANO_MGR_RIVERMAX
-  return ManagerType::RIVERMAX;
 #elif ANO_MGR_RDMA
   return ManagerType::RDMA;
 #else
@@ -69,16 +58,6 @@ std::unique_ptr<Manager> ManagerFactory::create_instance(ManagerType type) {
 #if ANO_MGR_DPDK
     case ManagerType::DPDK:
       _manager = std::make_unique<DpdkMgr>();
-      break;
-#endif
-#if ANO_MGR_GPUNETIO
-    case ManagerType::DOCA:
-      _manager = std::make_unique<DocaMgr>();
-      break;
-#endif
-#if ANO_MGR_RIVERMAX
-    case ManagerType::RIVERMAX:
-      _manager = std::make_unique<RivermaxMgr>();
       break;
 #endif
 #if ANO_MGR_RDMA
@@ -100,29 +79,9 @@ std::unique_ptr<Manager> ManagerFactory::create_instance(ManagerType type) {
   return _manager;
 }
 
-template <typename Config>
-ManagerType ManagerFactory::get_manager_type(const Config& config) {
-  // Ensure that Config has a method yaml_nodes() that returns a collection
-  // of YAML nodes
-  static_assert(
-      std::is_member_function_pointer<decltype(&Config::yaml_nodes)>::value,
-      "Config type must have a method yaml_nodes() that returns a collection of YAML nodes");
-
-  auto& yaml_nodes = config.yaml_nodes();
-  for (const auto& yaml_node : yaml_nodes) {
-    try {
-      auto node = yaml_node["advanced_network"]["cfg"];
-      std::string manager = node["manager"].template as<std::string>(ANO_MGR_STR__DEFAULT);
-      return manager_type_from_string(manager);
-    } catch (const std::exception& e) {
-      return manager_type_from_string(holoscan::advanced_network::ANO_MGR_STR__DEFAULT);
-    }
-  }
-
-  return manager_type_from_string(holoscan::advanced_network::ANO_MGR_STR__DEFAULT);
+ManagerType ManagerFactory::get_manager_type(const NetworkConfig& config) {
+  return config.common_.manager_type;
 }
-
-template ManagerType ManagerFactory::get_manager_type<Config>(const Config&);
 
 size_t Manager::get_alignment(MemoryKind kind) {
   switch (kind) {
@@ -152,7 +111,7 @@ Status Manager::populate_pool(struct rte_ring* ring, const std::string& mr_name)
 
 Status Manager::allocate_memory_regions() {
   HOLOSCAN_LOG_INFO("Registering memory regions");
-#if ANO_MGR_DPDK || ANO_MGR_GPUNETIO || ANO_MGR_RDMA
+#if ANO_MGR_DPDK || ANO_MGR_RDMA
   for (auto& mr : cfg_.mrs_) {
     void* ptr;
     AllocRegion ar;
