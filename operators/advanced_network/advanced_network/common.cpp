@@ -323,7 +323,6 @@ Status adv_net_init(NetworkConfig& config) {
   if (!mgr->set_config_and_initialize(config)) { return Status::INTERNAL_ERROR; }
 
   for (const auto& intf : config.ifs_) {
-    const auto& rx = intf.rx_;
     auto port = mgr->get_port_id(intf.address_);
     if (port < 0) {
       HOLOSCAN_LOG_ERROR("Failed to get port from name {}", intf.address_);

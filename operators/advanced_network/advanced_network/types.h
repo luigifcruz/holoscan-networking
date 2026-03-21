@@ -327,6 +327,8 @@ struct RDMAConfig {
  */
 inline std::string manager_type_to_string(ManagerType type) {
   switch (type) {
+    case ManagerType::UNKNOWN:
+      return "unknown";
     case ManagerType::DPDK:
       return ANO_MGR_STR__DPDK;
     case ManagerType::RDMA:

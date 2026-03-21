@@ -35,6 +35,8 @@
 #include <rte_eal.h>
 #endif
 
+#include <set>
+
 
 namespace holoscan::advanced_network {
 

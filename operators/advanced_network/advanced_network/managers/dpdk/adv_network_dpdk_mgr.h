@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <thread>
 #include <rte_common.h>
 #include <rte_log.h>
 #include <rte_malloc.h>

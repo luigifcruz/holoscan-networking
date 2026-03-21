@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <atomic>
 
 namespace holoscan::advanced_network {
 
