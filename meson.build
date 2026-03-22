@@ -33,7 +33,7 @@ compile_defs = [
 inc_dirs = include_directories('operators/advanced_network')
 
 # CUDA support for device memory regions
-cuda_dep = dependency('cuda', modules: ['cudart'], required: true)
+cuda_dep = dependency('cuda', modules: ['cudart', 'cuda'], required: true)
 
 # Dependencies
 deps = [
